@@ -1,1 +1,21 @@
-
+{
+  "name": "Loop Generator",
+  "short_name": "LoopGen",
+  "start_url": "/loop-generator/",
+  "display": "standalone",
+  "background_color": "#0144b5",
+  "theme_color": "#ffffff",
+  "description": "Loop generator for developers",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
