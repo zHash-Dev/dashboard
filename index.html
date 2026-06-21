@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 
 <head>
@@ -513,6 +513,15 @@
       background: rgba(127, 127, 127, .12)
     }
 
+    .editable-text {
+      cursor: pointer;
+      border-bottom: 1px dashed var(--muted);
+      padding-bottom: 2px;
+    }
+    .editable-text:hover {
+      color: var(--accent-2);
+    }
+
     @media(max-width:980px) {
       #app {
         grid-template-columns: 82px 1fr
@@ -627,8 +636,8 @@
                 id="saldo">0,00</span></strong></div>
           <div class="card metric"><span class="icon">▣</span><small>Total gasto no PC</small><strong>R$ <span
                 id="pcTotal">0,00</span></strong></div>
-          <div class="card metric"><span class="icon">◎</span><small>Metas ativas</small><strong
-              id="goalCount">0</strong></div>
+          <div class="card metric"><span class="icon">◎</span><small>Total em Metas</small><strong>R$ <span
+                id="goalTotal">0,00</span></strong></div>
           <div class="card metric"><span class="icon">✎</span><small>Notas salvas</small><strong
               id="noteCount">0</strong></div>
         </div>
@@ -676,7 +685,7 @@
         <div class="section-head">
           <div>
             <h2>Meu PC</h2>
-            <p>Liste peças, periféricos e futuros gastos.</p>
+            <p>Liste peças, periféricos e futuros gastos. Clique no nome do item para editá-lo.</p>
           </div>
         </div>
         <div class="panel">
@@ -702,7 +711,7 @@
         <div class="section-head">
           <div>
             <h2>Metas</h2>
-            <p>Acompanhe objetivos financeiros e pessoais.</p>
+            <p>Acompanhe objetivos financeiros e pessoais. Clique no nome da meta para mudá-lo.</p>
           </div>
         </div>
         <div class="panel">
@@ -773,9 +782,19 @@
     function updateGoalValue(id, field, value) {
       const goal = db.goals.find(g => g.id === id);
       if (!goal) return;
-      const number = parseFloat(value);
-      if (isNaN(number)) return;
-      goal[field] = field === "target" ? Math.max(1, number) : Math.max(0, number);
+      if (field === 'name') {
+        goal.name = value.trim() || "Meta Sem Nome";
+      } else {
+        const number = parseFloat(value);
+        if (isNaN(number)) return;
+        goal[field] = field === "target" ? Math.max(1, number) : Math.max(0, number);
+      }
+      save();
+    }
+    function updatePCItemName(id, value) {
+      const item = db.pc.find(p => p.id === id);
+      if (!item) return;
+      item.i = value.trim() || "Item";
       save();
     }
     function move(list, from, to) { const item = db[list].splice(from, 1)[0]; db[list].splice(to, 0, item); save(); }
@@ -799,8 +818,11 @@
     function render() {
       document.documentElement.classList.toggle("dark", db.theme === "dark");
       let saldo = 0; $("moneyTable").innerHTML = db.money.map((e, i) => { saldo += e.t === "in" ? +e.v : -e.v; return `<tr data-i="${i}"><td>${e.t === "in" ? "Entrada" : "Saída"}</td><td>R$ ${money(e.v)}</td><td><button class="ghost remove" onclick="removeFrom('money','${e.id}')">✕</button></td></tr>` }).join("") || `<tr><td colspan="3" class="empty">Nenhum lançamento ainda.</td></tr>`;
-      let pcTotal = 0; $("pcTable").innerHTML = db.pc.map((e, i) => { pcTotal += +e.p; return `<tr data-i="${i}"><td>${esc(e.i)}</td><td>R$ ${money(e.p)}</td><td><button class="ghost remove" onclick="removeFrom('pc','${e.id}')">✕</button></td></tr>` }).join("") || `<tr><td colspan="3" class="empty">Nenhum item ainda.</td></tr>`;
-      $("saldo").textContent = money(saldo); $("pcTotal").textContent = money(pcTotal); $("goalCount").textContent = db.goals.length; $("noteCount").textContent = db.notes.trim() ? 1 : 0;
+      let pcTotal = 0; $("pcTable").innerHTML = db.pc.map((e, i) => { pcTotal += +e.p; return `<tr data-i="${i}"><td><span class="editable-text" contenteditable="true" onblur="updatePCItemName('${e.id}', this.innerText)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">${esc(e.i)}</span></td><td>R$ ${money(e.p)}</td><td><button class="ghost remove" onclick="removeFrom('pc','${e.id}')">✕</button></td></tr>` }).join("") || `<tr><td colspan="3" class="empty">Nenhum item ainda.</td></tr>`;
+      
+      let goalsTotal = db.goals.reduce((acc, curr) => acc + (+curr.current), 0);
+      
+      $("saldo").textContent = money(saldo); $("pcTotal").textContent = money(pcTotal); $("goalTotal").textContent = money(goalsTotal); $("noteCount").textContent = db.notes.trim() ? 1 : 0;
       if (document.activeElement !== $("notesText")) $("notesText").value = db.notes;
       $("notesPreview").innerHTML = markdown(db.notes || "Comece uma nota para ver a prévia.");
       $("goalsList").innerHTML = db.goals.map(g => goalHTML(g, true)).join("") || `<div class="empty">Crie sua primeira meta.</div>`;
@@ -812,7 +834,12 @@
       const values = removable
         ? `<div class="goal-values"><label>Tem agora<input type="number" value="${+g.current}" onclick="this.select()" onchange="updateGoalValue('${g.id}','current',this.value)" onkeydown="if(event.key==='Enter')this.blur()"></label><label>Precisa<input type="number" value="${+g.target}" onclick="this.select()" onchange="updateGoalValue('${g.id}','target',this.value)" onkeydown="if(event.key==='Enter')this.blur()"></label></div>`
         : `<span class="pill">R$ ${money(g.current)} / R$ ${money(g.target)}</span>`;
-      return `<div class="card goal"><div class="row"><strong>${esc(g.name)}</strong>${removable ? `<button class="ghost remove" onclick="removeFrom('goals','${g.id}')">✕</button>` : ""}</div>${values}<div class="progress"><span style="width:${pct}%"></span></div></div>`;
+      
+      const nameElement = removable 
+        ? `<strong class="editable-text" contenteditable="true" onblur="updateGoalValue('${g.id}','name',this.innerText)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">${esc(g.name)}</strong>`
+        : `<strong>${esc(g.name)}</strong>`;
+
+      return `<div class="card goal"><div class="row">${nameElement}${removable ? `<button class="ghost remove" onclick="removeFrom('goals','${g.id}')">✕</button>` : ""}</div>${values}<div class="progress"><span style="width:${pct}%"></span></div></div>`;
     }
     function drawChart() {
       const groups = { Entradas: 0, Saídas: 0, PC: 0 }; db.money.forEach(e => groups[e.t === "in" ? "Entradas" : "Saídas"] += +e.v); db.pc.forEach(e => groups.PC += +e.p);
@@ -833,4 +860,3 @@
 </body>
 
 </html>
-
