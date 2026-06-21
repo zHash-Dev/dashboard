@@ -1,11 +1,10 @@
 {
-  "name": "Dashboard",
-  "short_name": "Dashboard",
-  "start_url": "/dashboard/",
+  "name": "Organizer Dashboard",
+  "short_name": "Organizer",
+  "start_url": "./",
   "display": "standalone",
-  "background_color": "#10151f",
-  "theme_color": "#ffffff",
-  "description": "Finance and expense dashboard.",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
   "icons": [
     {
       "src": "icon-192.png",
