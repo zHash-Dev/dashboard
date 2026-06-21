@@ -1,0 +1,826 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Organizer Dashboard</title>
+  <style>
+    :root {
+      --bg: #eef3f8;
+      --panel: rgba(255, 255, 255, .68);
+      --panel-strong: rgba(255, 255, 255, .86);
+      --text: #172033;
+      --muted: #667085;
+      --line: rgba(23, 32, 51, .12);
+      --accent: #0f766e;
+      --accent-2: #2563eb;
+      --danger: #dc2626;
+      --shadow: 0 24px 70px rgba(15, 23, 42, .14);
+    }
+
+    :root.dark {
+      --bg: #10151f;
+      --panel: rgba(24, 32, 45, .68);
+      --panel-strong: rgba(24, 32, 45, .9);
+      --text: #f7fafc;
+      --muted: #a6b0c3;
+      --line: rgba(255, 255, 255, .12);
+      --accent: #2dd4bf;
+      --accent-2: #60a5fa;
+      --danger: #f87171;
+      --shadow: 0 24px 80px rgba(0, 0, 0, .35);
+    }
+
+    * {
+      box-sizing: border-box
+    }
+
+    html {
+      scroll-behavior: smooth
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, Segoe UI, Arial, sans-serif;
+      background:
+        radial-gradient(circle at 12% 10%, rgba(45, 212, 191, .18), transparent 28%),
+        radial-gradient(circle at 88% 12%, rgba(96, 165, 250, .18), transparent 28%), var(--bg);
+      color: var(--text);
+    }
+
+    button,
+    input,
+    textarea,
+    select {
+      font: inherit
+    }
+
+    button {
+      cursor: pointer
+    }
+
+    #app {
+      display: grid;
+      grid-template-columns: 270px 1fr;
+      min-height: 100vh
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      padding: 18px;
+      border-right: 1px solid var(--line);
+      background: var(--panel);
+      backdrop-filter: blur(18px);
+      transition: width .25s ease, padding .25s ease;
+      overflow: hidden;
+    }
+
+    .sidebar.collapsed {
+      width: 82px;
+      padding: 18px 12px
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px
+    }
+
+    .logo {
+      width: 42px;
+      height: 42px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #fff;
+      font-weight: 800
+    }
+
+    .brand-text {
+      white-space: nowrap
+    }
+
+    .brand-text h1 {
+      font-size: 18px;
+      margin: 0
+    }
+
+    .brand-text span {
+      font-size: 12px;
+      color: var(--muted)
+    }
+
+    .sidebar.collapsed .brand-text,
+    .sidebar.collapsed .nav-label {
+      display: none
+    }
+
+    .nav {
+      display: grid;
+      gap: 8px
+    }
+
+    .nav button,
+    .icon-btn,
+    .primary,
+    .ghost {
+      border: 1px solid var(--line);
+      background: var(--panel-strong);
+      color: var(--text);
+      border-radius: 8px;
+      min-height: 42px;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      justify-content: flex-start;
+    }
+
+    .nav button.active {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #fff;
+      border-color: transparent;
+      box-shadow: var(--shadow)
+    }
+
+    .icon {
+      width: 20px;
+      text-align: center;
+      flex: 0 0 20px
+    }
+
+    .sidebar-tools {
+      position: absolute;
+      left: 18px;
+      right: 18px;
+      bottom: 18px;
+      display: grid;
+      gap: 8px
+    }
+
+    .sidebar.collapsed .sidebar-tools {
+      left: 12px;
+      right: 12px
+    }
+
+    .main {
+      min-width: 0;
+      padding: 22px;
+      overflow: auto
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 18px
+    }
+
+    .search {
+      position: relative
+    }
+
+    .search input {
+      padding-left: 42px
+    }
+
+    .search .icon {
+      position: absolute;
+      left: 13px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted)
+    }
+
+    input,
+    textarea,
+    select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel-strong);
+      color: var(--text);
+      padding: 11px 12px;
+      outline: none;
+      min-height: 42px;
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      border-color: var(--accent-2);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, .14)
+    }
+
+    .page {
+      display: none;
+      animation: rise .24s ease
+    }
+
+    .page.active {
+      display: block
+    }
+
+    @keyframes rise {
+      from {
+        opacity: 0;
+        transform: translateY(8px)
+      }
+
+      to {
+        opacity: 1;
+        transform: none
+      }
+    }
+
+    .section-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 8px 0 16px
+    }
+
+    .section-head h2 {
+      font-size: 28px;
+      margin: 0
+    }
+
+    .section-head p {
+      margin: 4px 0 0;
+      color: var(--muted)
+    }
+
+    .grid {
+      display: grid;
+      gap: 14px
+    }
+
+    .cards {
+      grid-template-columns: repeat(4, minmax(0, 1fr))
+    }
+
+    .card,
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    .metric {
+      position: relative;
+      overflow: hidden;
+      min-height: 126px
+    }
+
+    .metric small {
+      color: var(--muted);
+      display: block
+    }
+
+    .metric strong {
+      font-size: 26px;
+      display: block;
+      margin-top: 10px
+    }
+
+    .metric .icon {
+      font-size: 24px
+    }
+
+    .metric:after {
+      content: "";
+      position: absolute;
+      right: -34px;
+      bottom: -34px;
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      background: rgba(37, 99, 235, .12)
+    }
+
+    .layout-2 {
+      grid-template-columns: 1.25fr .75fr
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      align-items: center
+    }
+
+    .row>* {
+      min-width: 0
+    }
+
+    .row input {
+      flex: 1
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #fff;
+      border-color: transparent;
+      justify-content: center
+    }
+
+    .ghost {
+      justify-content: center
+    }
+
+    .danger {
+      color: var(--danger)
+    }
+
+    .remove {
+      width: 34px;
+      height: 34px;
+      min-height: 34px;
+      padding: 0;
+      justify-content: center;
+      color: var(--danger)
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse
+    }
+
+    th,
+    td {
+      padding: 11px 8px;
+      border-bottom: 1px solid var(--line);
+      text-align: left
+    }
+
+    th {
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase
+    }
+
+    tr[draggable=true] {
+      cursor: grab
+    }
+
+    .empty {
+      color: var(--muted);
+      text-align: center;
+      padding: 18px
+    }
+
+    .chart {
+      height: 220px;
+      display: flex;
+      align-items: end;
+      gap: 10px;
+      padding: 16px 4px 4px
+    }
+
+    .bar {
+      flex: 1;
+      min-width: 22px;
+      border-radius: 8px 8px 4px 4px;
+      background: linear-gradient(180deg, var(--accent-2), var(--accent));
+      position: relative;
+      transition: height .25s ease
+    }
+
+    .bar span {
+      position: absolute;
+      left: 50%;
+      bottom: 100%;
+      transform: translateX(-50%);
+      font-size: 11px;
+      color: var(--muted);
+      white-space: nowrap;
+      margin-bottom: 6px
+    }
+
+    textarea {
+      min-height: 210px;
+      resize: vertical
+    }
+
+    .preview {
+      line-height: 1.55
+    }
+
+    .preview h1,
+    .preview h2,
+    .preview h3 {
+      margin: 12px 0 8px
+    }
+
+    .preview code {
+      background: rgba(127, 127, 127, .14);
+      padding: 2px 5px;
+      border-radius: 5px
+    }
+
+    .goal {
+      display: grid;
+      gap: 8px
+    }
+
+    .goal-values {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center
+    }
+
+    .goal-values label {
+      display: grid;
+      gap: 5px;
+      min-width: 130px;
+      color: var(--muted);
+      font-size: 12px
+    }
+
+    .goal-values input {
+      min-height: 36px;
+      padding: 8px 10px
+    }
+
+    .progress {
+      height: 10px;
+      border-radius: 99px;
+      background: rgba(127, 127, 127, .18);
+      overflow: hidden
+    }
+
+    .progress span {
+      display: block;
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      transition: width .25s ease
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 9px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: 12px
+    }.results {
+      position: absolute;
+      z-index: 20;
+      left: 0;
+      right: 0;
+      top: 48px;
+      background: var(--panel-strong);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      display: none
+    }
+
+    .results button {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      color: var(--text);
+      padding: 11px 12px;
+      text-align: left
+    }
+
+    .results button:hover {
+      background: rgba(127, 127, 127, .12)
+    }
+
+    @media(max-width:980px) {
+      #app {
+        grid-template-columns: 82px 1fr
+      }
+
+      .sidebar {
+        width: 82px;
+        padding: 18px 12px
+      }
+
+      .brand-text,
+      .nav-label {
+        display: none
+      }
+
+      .cards,
+      .layout-2 { grid-template-columns: 1fr }
+
+      .topbar {
+        grid-template-columns: 1fr auto
+      }
+    }
+
+    @media(max-width:640px) {
+      #app {
+        display: block
+      }
+
+      .sidebar {
+        position: fixed;
+        z-index: 30;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        top: auto;
+        width: auto;
+        height: auto;
+        padding: 8px;
+        border-right: 0;
+        border-top: 1px solid var(--line)
+      }
+
+      .brand,
+      .sidebar-tools {
+        display: none
+      }
+
+      .nav {
+        grid-template-columns: repeat(5, 1fr);
+        gap: 6px
+      }
+
+      .nav button {
+        justify-content: center;
+        padding: 9px;
+        min-height: 42px
+      }
+
+      .main {
+        padding: 14px 14px 86px
+      }
+
+      .topbar {
+        grid-template-columns: 1fr
+      }
+
+      .section-head {
+        align-items: flex-start;
+        flex-direction: column
+      }
+
+      .row {
+        flex-direction: column;
+        align-items: stretch
+      }}
+  </style>
+</head>
+
+<body>
+  <div id="app">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="logo">O</div>
+        <div class="brand-text">
+          <h1>Organizer</h1><span>Painel pessoal</span>
+        </div>
+      </div>
+      <nav class="nav" id="nav">
+        <button class="active" data-page="dashboard"><span class="icon">⌂</span><span
+            class="nav-label">Dashboard</span></button>
+        <button data-page="money"><span class="icon">$</span><span class="nav-label">Finanças</span></button>
+        <button data-page="pc"><span class="icon">▣</span><span class="nav-label">Meu PC</span></button>
+        <button data-page="goals"><span class="icon">◎</span><span class="nav-label">Metas</span></button>
+        <button data-page="notes"><span class="icon">✎</span><span class="nav-label">Notas</span></button>
+      </nav>
+      <div class="sidebar-tools">
+        <button class="ghost" id="collapseBtn"><span class="icon">☰</span><span
+            class="nav-label">Recolher</span></button>
+        <button class="ghost" id="themeBtn"><span class="icon">◐</span><span class="nav-label">Tema</span></button>
+      </div>
+    </aside>
+    <main class="main">
+      <section id="dashboard" class="page active">
+        <div class="section-head">
+          <div>
+            <h2>Dashboard</h2>
+            <p>Resumo rápido das suas finanças, metas e gastos.</p>
+          </div><span class="pill" id="todayPill"></span>
+        </div>
+        <div class="grid cards">
+          <div class="card metric"><span class="icon">$</span><small>Saldo</small><strong>R$ <span
+                id="saldo">0,00</span></strong></div>
+          <div class="card metric"><span class="icon">▣</span><small>Total gasto no PC</small><strong>R$ <span
+                id="pcTotal">0,00</span></strong></div>
+          <div class="card metric"><span class="icon">◎</span><small>Metas ativas</small><strong
+              id="goalCount">0</strong></div>
+          <div class="card metric"><span class="icon">✎</span><small>Notas salvas</small><strong
+              id="noteCount">0</strong></div>
+        </div>
+        <div class="grid layout-2" style="margin-top:14px">
+          <div class="panel">
+            <h3>Gastos por categoria</h3>
+            <div class="chart" id="spendChart"></div>
+          </div>
+          <div class="panel">
+            <h3>Próximas metas</h3>
+            <div class="grid" id="goalSummary"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="money" class="page">
+        <div class="section-head">
+          <div>
+            <h2>Finanças</h2>
+            <p>Use Enter para adicionar. Arraste as linhas para reorganizar.</p>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="row"><input id="valor" type="number" placeholder="Valor">
+            <select id="tipo">
+              <option value="in">Entrada</option>
+              <option value="out">Saída</option>
+            </select>
+            <button class="primary" id="addMoneyBtn">Adicionar</button>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Tipo</th>
+                <th>Valor</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="moneyTable"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="pc" class="page">
+        <div class="section-head">
+          <div>
+            <h2>Meu PC</h2>
+            <p>Liste peças, periféricos e futuros gastos.</p>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="row">
+            <input id="item" placeholder="Item">
+            <input id="preco" type="number" placeholder="Preço">
+            <button class="primary" id="addPCBtn">Adicionar</button>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>Preço</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="pcTable"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="goals" class="page">
+        <div class="section-head">
+          <div>
+            <h2>Metas</h2>
+            <p>Acompanhe objetivos financeiros e pessoais.</p>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="row">
+            <input id="goalName" placeholder="Nome da meta">
+            <input id="goalCurrent" type="number" placeholder="Atual">
+            <input id="goalTarget" type="number" placeholder="Alvo">
+            <button class="primary" id="addGoalBtn">Adicionar</button>
+          </div>
+          <div class="grid" id="goalsList" style="margin-top:14px"></div>
+        </div>
+      </section>
+
+      <section id="notes" class="page">
+        <div class="section-head">
+          <div>
+            <h2>Notas</h2>
+            <p>Markdown simples com pré-visualização ao lado.</p>
+          </div>
+        </div>
+        <div class="grid layout-2">
+          <div class="panel"><textarea id="notesText" placeholder="# Ideias&#10;- Escreva em Markdown"></textarea></div>
+          <div class="panel preview" id="notesPreview"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  
+  <script>
+    const initial = {
+      notes: "", money: [], pc: [], goals: [], theme: "dark"
+    };
+    const db = normalize(JSON.parse(localStorage.getItem("organizer") || "{}"));
+    const $ = id => document.getElementById(id);
+    function uid() { return window.crypto && crypto.randomUUID ? crypto.randomUUID() : String(Date.now() + Math.random()); }
+    function esc(value) { return String(value ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+    function normalize(data) {
+      const normalized = { ...initial, ...data };
+      normalized.money = (normalized.money || []).map(e => ({ id: e.id || uid(), t: e.t || "out", v: +e.v || 0 }));
+      normalized.pc = (normalized.pc || []).map(e => ({ id: e.id || uid(), i: e.i || "Item", p: +e.p || 0 }));
+      normalized.goals = (normalized.goals || []).map(e => ({ id: e.id || uid(), name: e.name || "Meta", current: +e.current || 0, target: +e.target || 1 }));
+      return normalized;
+    }
+    function money(v) { return Number(v || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+    function save() { localStorage.setItem("organizer", JSON.stringify(db)); render(); }
+    function show(id) {
+      document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+      document.querySelectorAll(".nav button").forEach(b => b.classList.toggle("active", b.dataset.page === id));
+      $(id).classList.add("active");
+    }
+    function addMoney() {
+      const v = parseFloat($("valor").value); if (isNaN(v)) return;
+      db.money.push({ id: uid(), t: $("tipo").value, v });
+      $("valor").value = ""; save();
+    }
+    function addPC() {
+      const p = parseFloat($("preco").value); if (!$("item").value.trim() || isNaN(p)) return;
+      db.pc.push({ id: uid(), i: $("item").value.trim(), p }); $("item").value = ""; $("preco").value = ""; save();
+    }
+    function addGoal() {
+      const target = parseFloat($("goalTarget").value), current = parseFloat($("goalCurrent").value || 0);
+      if (!$("goalName").value.trim() || isNaN(target) || target <= 0) return;
+      db.goals.push({ id: uid(), name: $("goalName").value.trim(), current: isNaN(current) ? 0 : current, target });
+      $("goalName").value = ""; $("goalCurrent").value = ""; $("goalTarget").value = ""; save();
+    }
+    function removeFrom(list, id) { db[list] = db[list].filter(e => e.id !== id); save(); }
+    function updateGoalValue(id, field, value) {
+      const goal = db.goals.find(g => g.id === id);
+      if (!goal) return;
+      const number = parseFloat(value);
+      if (isNaN(number)) return;
+      goal[field] = field === "target" ? Math.max(1, number) : Math.max(0, number);
+      save();
+    }
+    function move(list, from, to) { const item = db[list].splice(from, 1)[0]; db[list].splice(to, 0, item); save(); }
+    function dragRows(tbody, list) {
+      [...tbody.children].forEach((tr, i) => {
+        tr.draggable = true; tr.ondragstart = e => e.dataTransfer.setData("text/plain", i);
+        tr.ondragover = e => e.preventDefault();
+        tr.ondrop = e => move(list, +e.dataTransfer.getData("text/plain"), i);
+      });
+    }
+    function markdown(text) {
+      const esc = text.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+      return esc.split("\n").map(line => {
+        if (line.startsWith("### ")) return `<h3>${line.slice(4)}</h3>`;
+        if (line.startsWith("## ")) return `<h2>${line.slice(3)}</h2>`;
+        if (line.startsWith("# ")) return `<h1>${line.slice(2)}</h1>`;
+        if (line.startsWith("- ")) return `<p>• ${line.slice(2)}</p>`;
+        return `<p>${line.replace(/\*\*(.*?)\*\*/g, "<b>$1</b>").replace(/`(.*?)`/g, "<code>$1</code>") || "&nbsp;"}</p>`;
+      }).join("");
+    }
+    function render() {
+      document.documentElement.classList.toggle("dark", db.theme === "dark");
+      let saldo = 0; $("moneyTable").innerHTML = db.money.map((e, i) => { saldo += e.t === "in" ? +e.v : -e.v; return `<tr data-i="${i}"><td>${e.t === "in" ? "Entrada" : "Saída"}</td><td>R$ ${money(e.v)}</td><td><button class="ghost remove" onclick="removeFrom('money','${e.id}')">✕</button></td></tr>` }).join("") || `<tr><td colspan="3" class="empty">Nenhum lançamento ainda.</td></tr>`;
+      let pcTotal = 0; $("pcTable").innerHTML = db.pc.map((e, i) => { pcTotal += +e.p; return `<tr data-i="${i}"><td>${esc(e.i)}</td><td>R$ ${money(e.p)}</td><td><button class="ghost remove" onclick="removeFrom('pc','${e.id}')">✕</button></td></tr>` }).join("") || `<tr><td colspan="3" class="empty">Nenhum item ainda.</td></tr>`;
+      $("saldo").textContent = money(saldo); $("pcTotal").textContent = money(pcTotal); $("goalCount").textContent = db.goals.length; $("noteCount").textContent = db.notes.trim() ? 1 : 0;
+      if (document.activeElement !== $("notesText")) $("notesText").value = db.notes;
+      $("notesPreview").innerHTML = markdown(db.notes || "Comece uma nota para ver a prévia.");
+      $("goalsList").innerHTML = db.goals.map(g => goalHTML(g, true)).join("") || `<div class="empty">Crie sua primeira meta.</div>`;
+      $("goalSummary").innerHTML = db.goals.slice(0, 3).map(g => goalHTML(g, false)).join("") || `<div class="empty">Sem metas por enquanto.</div>`;
+      drawChart(); dragRows($("moneyTable"), "money"); dragRows($("pcTable"), "pc");
+    }
+    function goalHTML(g, removable) {
+      const pct = Math.min(100, Math.round((+g.current / +g.target) * 100) || 0);
+      const values = removable
+        ? `<div class="goal-values"><label>Tem agora<input type="number" value="${+g.current}" onclick="this.select()" onchange="updateGoalValue('${g.id}','current',this.value)" onkeydown="if(event.key==='Enter')this.blur()"></label><label>Precisa<input type="number" value="${+g.target}" onclick="this.select()" onchange="updateGoalValue('${g.id}','target',this.value)" onkeydown="if(event.key==='Enter')this.blur()"></label></div>`
+        : `<span class="pill">R$ ${money(g.current)} / R$ ${money(g.target)}</span>`;
+      return `<div class="card goal"><div class="row"><strong>${esc(g.name)}</strong>${removable ? `<button class="ghost remove" onclick="removeFrom('goals','${g.id}')">✕</button>` : ""}</div>${values}<div class="progress"><span style="width:${pct}%"></span></div></div>`;
+    }
+    function drawChart() {
+      const groups = { Entradas: 0, Saídas: 0, PC: 0 }; db.money.forEach(e => groups[e.t === "in" ? "Entradas" : "Saídas"] += +e.v); db.pc.forEach(e => groups.PC += +e.p);
+      const max = Math.max(1, ...Object.values(groups));
+      $("spendChart").innerHTML = Object.entries(groups).map(([k, v]) => `<div class="bar" style="height:${Math.max(6, (v / max) * 100)}%"><span>${k}<br>R$ ${money(v)}</span></div>`).join("");
+    }
+    document.querySelectorAll(".nav button").forEach(b => b.onclick = () => show(b.dataset.page));
+    $("collapseBtn").onclick = () => $("sidebar").classList.toggle("collapsed");
+    $("themeBtn").onclick = () => { db.theme = db.theme === "dark" ? "light" : "dark"; save(); };
+    $("addMoneyBtn").onclick = addMoney; $("addPCBtn").onclick = addPC; $("addGoalBtn").onclick = addGoal;
+    $("valor").addEventListener("keydown", e => { if (e.key === "Enter") addMoney(); });
+    ["item", "preco"].forEach(id => $(id).addEventListener("keydown", e => { if (e.key === "Enter") addPC(); }));
+    ["goalName", "goalCurrent", "goalTarget"].forEach(id => $(id).addEventListener("keydown", e => { if (e.key === "Enter") addGoal(); }));
+    $("notesText").oninput = e => { db.notes = e.target.value; save(); };
+    $("todayPill").textContent = new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" });
+    render();
+  </script>
+</body>
+
+</html>
+
