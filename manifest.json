@@ -1,6 +1,6 @@
 {
-  "name": "Loop Generator",
-  "short_name": "LoopGen",
+  "name": "Dashboard",
+  "short_name": "Dashboard",
   "start_url": "/dashboard/",
   "display": "standalone",
   "background_color": "#10151f",
