@@ -636,7 +636,7 @@
                 id="saldo">0,00</span></strong></div>
           <div class="card metric"><span class="icon">▣</span><small>Total gasto no PC</small><strong>R$ <span
                 id="pcTotal">0,00</span></strong></div>
-          <div class="card metric"><span class="icon">◎</span><small>Total em Metas</small><strong>R$ <span
+          <div class="card metric"><span class="icon">◎</span><small>Total Necessário (Metas)</small><strong>R$ <span
                 id="goalTotal">0,00</span></strong></div>
           <div class="card metric"><span class="icon">✎</span><small>Notas salvas</small><strong
               id="noteCount">0</strong></div>
@@ -820,7 +820,8 @@
       let saldo = 0; $("moneyTable").innerHTML = db.money.map((e, i) => { saldo += e.t === "in" ? +e.v : -e.v; return `<tr data-i="${i}"><td>${e.t === "in" ? "Entrada" : "Saída"}</td><td>R$ ${money(e.v)}</td><td><button class="ghost remove" onclick="removeFrom('money','${e.id}')">✕</button></td></tr>` }).join("") || `<tr><td colspan="3" class="empty">Nenhum lançamento ainda.</td></tr>`;
       let pcTotal = 0; $("pcTable").innerHTML = db.pc.map((e, i) => { pcTotal += +e.p; return `<tr data-i="${i}"><td><span class="editable-text" contenteditable="true" onblur="updatePCItemName('${e.id}', this.innerText)" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">${esc(e.i)}</span></td><td>R$ ${money(e.p)}</td><td><button class="ghost remove" onclick="removeFrom('pc','${e.id}')">✕</button></td></tr>` }).join("") || `<tr><td colspan="3" class="empty">Nenhum item ainda.</td></tr>`;
       
-      let goalsTotal = db.goals.reduce((acc, curr) => acc + (+curr.current), 0);
+      // ALTERADO: Agora faz o reduce somando o g.target (Precisa / Alvo total)
+      let goalsTotal = db.goals.reduce((acc, curr) => acc + (+curr.target), 0);
       
       $("saldo").textContent = money(saldo); $("pcTotal").textContent = money(pcTotal); $("goalTotal").textContent = money(goalsTotal); $("noteCount").textContent = db.notes.trim() ? 1 : 0;
       if (document.activeElement !== $("notesText")) $("notesText").value = db.notes;
