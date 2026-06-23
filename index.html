@@ -742,6 +742,14 @@
 
   
   <script>
+
+	  
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./service-worker.js");
+  });
+}.
+	  
     const initial = {
       notes: "", money: [], pc: [], goals: [], theme: "dark"
     };
