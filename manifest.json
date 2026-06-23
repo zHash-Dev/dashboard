@@ -3,8 +3,8 @@
   "short_name": "Organizer",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#0f172a",
-  "theme_color": "#0f172a",
+  "background_color": "#10151F",
+  "theme_color": "#10151F",
   "icons": [
     {
       "src": "icon-192.png",
